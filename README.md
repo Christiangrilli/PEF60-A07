@@ -1,5 +1,4 @@
-# PEF60-A07
-Materiali e appunti per la preparazione all'abilitazione PEF60 A-07: tirocinio, didattica e discipline audiovisive.
+
 # PEF60-A07
 
 Repository personale per la preparazione all'esame di abilitazione PEF60 per la classe di concorso A-07 — Discipline Audiovisive.
