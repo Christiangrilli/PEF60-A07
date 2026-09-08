@@ -13,9 +13,9 @@ Materiali relativi al tirocinio diretto, al profilo professionale del docente e 
 - [Coordinate per orientarsi nella scuola](01_Tirocinio/02_coordinate_scuola.md)
 - [Spunti per l'osservazione del tirocinio diretto](01_Tirocinio/03_osservazione_tirocinio.md)
 
-### 02 — Didattica
+### 02 — Pedagogia interculturale
 
-Materiali relativi alla didattica, alla progettazione didattica, alla valutazione, all'inclusione e alle metodologie di insegnamento.
+Materiali relativi alla pedagogia interculturale
 
 ### 03 — Audiovisivo
 
