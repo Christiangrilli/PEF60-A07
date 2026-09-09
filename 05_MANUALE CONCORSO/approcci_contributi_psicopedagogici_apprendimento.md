@@ -1,4 +1,4 @@
-# Approcci e contributi psicopedagogici all’apprendimento
+# APPROCCI E COTRIBUTI PSICOPEDAGOGICI ALL'APPRENDIMENTO 
 
 ## Indice
 
