@@ -30,7 +30,7 @@ Materiali relativi allo studio dei processi cognitivi, dell'apprendimento e dell
 
 ### 📖 05 — Manuale Concorso
 
-Materiali di riferimento e documentazione ufficiale per la preparazione all'esame di abilitazione PEF60-A07.
+Materiali di riferimento e documentazione ufficiale per la preparazione all'esame di abilitazione PEF60-A07 e del concorso.
 
 ## Obiettivo
 
