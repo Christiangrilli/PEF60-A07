@@ -1,0 +1,40 @@
+name: Check training materials
+
+on:
+  push:
+    paths:
+      - '**.md'
+      - '.github/workflows/check-training.yml'
+  pull_request:
+    paths:
+      - '**.md'
+      - '.github/workflows/check-training.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check core training files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "training abilitazione.md"
+          test -f "06_Training/domande_esame.md"
+          test -f "06_Training/quiz.md"
+          test -f "06_Training/simulazioni.md"
+          test -f "06_Training/checklist_lezione.md"
+          echo "Core training files are present."
+
+      - name: Check Markdown headings
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=("training abilitazione.md" 06_Training/*.md)
+          for file in "${files[@]}"; do
+            echo "Checking $file"
+            grep -q '^# ' "$file"
+          done
+          echo "Markdown heading check passed."
