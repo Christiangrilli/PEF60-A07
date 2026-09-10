@@ -10,10 +10,41 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: genera-podcast
+  cancel-in-progress: false
+
 jobs:
-  narrate:
+  prepare:
+    name: Prepara elenco manuali
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    outputs:
+      matrix: ${{ steps.files.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Costruisce matrice dei manuali
+        id: files
+        shell: bash
+        run: |
+          set -euo pipefail
+          matrix="$(find '05_MANUALE CONCORSO' -maxdepth 1 -type f -name '*.md' -printf '%p\n' | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+          echo "Manuali trovati: $(printf '%s' "$matrix" | jq 'length')"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  generate:
+    name: Genera ${{ matrix.file }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        file: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
@@ -44,35 +75,82 @@ jobs:
           p = Path('/tmp/markdown-podcast-narrator/narrator.py')
           s = p.read_text()
           s = s.replace('self.language = "English"', 'self.language = "Italian"')
-          s = s.replace('self.speaker = "Ryan"', 'self.speaker = "Ryan"')
           p.write_text(s)
           PY
 
-      - name: Generate WAV and MP3 files
+      - name: Genera WAV e MP3
+        timeout-minutes: 105
+        shell: bash
+        env:
+          INPUT_FILE: ${{ matrix.file }}
         run: |
+          set -euo pipefail
           mkdir -p '05_MANUALE CONCORSO/audio'
-          find '05_MANUALE CONCORSO' -maxdepth 1 -type f -name '*.md' -print0 | while IFS= read -r -d '' file; do
-            base="$(basename "$file" .md)"
-            safe="$(printf '%s' "$base" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9àèéìòù_-]/_/g' | tr -s '_')"
-            echo "=== Generating: $file ==="
-            python /tmp/markdown-podcast-narrator/main.py "$file" \
-              --engine qwen \
-              --model Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice \
-              --rate 0.95 \
-              --speaker Ryan \
-              --instruct 'Voce narrante italiana, maschile, chiara, calma e professionale. Pronuncia correttamente nomi e termini italiani. Ritmo naturale da podcast didattico, senza enfasi eccessiva.' \
-              -o "/tmp/${safe}.wav"
-            ffmpeg -y -i "/tmp/${safe}.wav" -codec:a libmp3lame -b:a 48k "05_MANUALE CONCORSO/audio/${safe}.mp3"
-            rm -f "/tmp/${safe}.wav"
-          done
+          base="$(basename "$INPUT_FILE" .md)"
+          safe="$(printf '%s' "$base" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9àèéìòù_-]/_/g' | tr -s '_')"
+          echo "=== INIZIO: $INPUT_FILE ==="
+          echo "Output: 05_MANUALE CONCORSO/audio/${safe}.mp3"
 
-      - name: Commit audio files
+          python /tmp/markdown-podcast-narrator/main.py "$INPUT_FILE" \
+            --engine qwen \
+            --model Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice \
+            --rate 0.95 \
+            --speaker Ryan \
+            --instruct 'Voce narrante italiana, maschile, chiara, calma e professionale. Pronuncia correttamente nomi e termini italiani. Ritmo naturale da podcast didattico, senza enfasi eccessiva.' \
+            -o "/tmp/${safe}.wav"
+
+          test -s "/tmp/${safe}.wav"
+          ffmpeg -y -i "/tmp/${safe}.wav" -codec:a libmp3lame -b:a 64k -ac 1 "05_MANUALE CONCORSO/audio/${safe}.mp3"
+          test -s "05_MANUALE CONCORSO/audio/${safe}.mp3"
+          rm -f "/tmp/${safe}.wav"
+          echo "=== COMPLETATO: ${safe}.mp3 ==="
+
+      - name: Carica MP3 come artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: podcast-${{ strategy.job-index }}
+          path: '05_MANUALE CONCORSO/audio/*.mp3'
+          if-no-files-found: error
+          retention-days: 7
+
+  commit:
+    name: Commit degli MP3
+    needs: generate
+    if: ${{ always() && needs.generate.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Scarica tutti gli artifact audio
+        uses: actions/download-artifact@v4
+        with:
+          pattern: podcast-*
+          path: /tmp/podcast-artifacts
+          merge-multiple: true
+
+      - name: Copia MP3 nella repository
+        shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p '05_MANUALE CONCORSO/audio'
+          find /tmp/podcast-artifacts -type f -name '*.mp3' -exec cp -f {} '05_MANUALE CONCORSO/audio/' \;
+          echo 'MP3 prodotti:'
+          find '05_MANUALE CONCORSO/audio' -maxdepth 1 -type f -name '*.mp3' -print | sort
+
+      - name: Commit audio completati
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add '05_MANUALE CONCORSO/audio/'
           if git diff --cached --quiet; then
-            echo 'No audio changes to commit.'
+            echo 'Nessun nuovo MP3 da committare.'
             exit 0
           fi
           git commit -m 'Aggiunge podcast audio ai manuali concorso'
