@@ -1,6 +1,5 @@
 # Il sistema scolastico in Italia
 
-> **Nota alla trascrizione:** questo documento è stato ricavato dal file RTF originale, ripulito da interruzioni di riga artificiali, intestazioni/piè di pagina ripetuti ("AREA II – PROGETTAZIONE: PERCORSI E ATTIVITÀ", numeri di pagina) e riorganizzato in paragrafi ed elenchi per facilitarne la lettura e lo studio. Nella sezione 2.3 (riforma Gentile) il testo sorgente presentava due frasi interpolate tra loro, verosimilmente per un errore di conversione del documento originale da un impaginato su più colonne: qui sono state ricomposte nell'ordine logico, con una nota puntuale nel punto in cui è avvenuta la correzione. Due riferimenti a tabelle/schemi presenti nel testo originale (una "Tabella riassuntiva della riforma Gentile" e uno schema grafico delle competenze del docente) non contenevano dati testuali recuperabili dal file di origine: sono stati segnalati come tali anziché inventati.
 
 ## Sommario
 
