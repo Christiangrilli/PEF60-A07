@@ -10,9 +10,11 @@ on:
 permissions:
   contents: write
 
+# Impedisce che due generazioni complete corrano contemporaneamente.
+# Se parte una nuova esecuzione, quella precedente viene annullata.
 concurrency:
   group: genera-podcast
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   prepare:
